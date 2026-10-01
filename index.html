@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Virtual Cursor - Controlled by Index Finger</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <!-- MediaPipe Hands & Camera Utils CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <!-- App Container -->
+    <div class="app-container">
+        
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo">
+                <span class="logo-icon">✨</span>
+                <h1>Virtual<span>Cursor</span> AI</h1>
+            </div>
+            <div class="status-pills">
+                <div id="cam-status" class="status-pill offline">
+                    <span class="dot"></span> Camera: Initializing...
+                </div>
+                <div id="gesture-status" class="status-pill idle">
+                    <span class="gesture-icon">✋</span> No Hand Detected
+                </div>
+                <div id="fps-badge" class="status-pill fps">0 FPS</div>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="workspace">
+            
+            <!-- Left Panel: Webcam Feed & Controls -->
+            <aside class="panel camera-panel">
+                <div class="panel-header">
+                    <h2>Webcam Vision</h2>
+                    <span class="badge">Live Tracking</span>
+                </div>
+                
+                <div class="video-wrapper">
+                    <!-- Hidden video, canvas renders feedback overlay -->
+                    <video id="webcam" playsinline></video>
+                    <canvas id="output-canvas"></canvas>
+                    <div id="camera-prompt" class="camera-prompt">
+                        <div class="spinner"></div>
+                        <p>Click "Start Camera" to begin finger tracking</p>
+                    </div>
+                </div>
+
+                <!-- Camera Controls & Settings -->
+                <div class="controls-card">
+                    <button id="toggle-cam-btn" class="btn btn-primary">
+                        <span class="btn-icon">📹</span> Start Camera
+                    </button>
+                    
+                    <div class="setting-group">
+                        <label for="smooth-slider">Cursor Smoothness</label>
+                        <input type="range" id="smooth-slider" min="1" max="10" value="5" step="0.5">
+                        <span id="smooth-val" class="value-display">5.0</span>
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="cursor-style">Cursor Theme</label>
+                        <select id="cursor-style" class="select-input">
+                            <option value="neon">Cyber Neon Glow</option>
+                            <option value="laser">Laser Red Pointer</option>
+                            <option value="emerald">Emerald Ring</option>
+                            <option value="minimal">Minimal White</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Gesture Guide -->
+                <div class="gesture-guide">
+                    <h3>Gesture Guide</h3>
+                    <ul>
+                        <li><span class="icon">☝️</span> <strong>Index Finger:</strong> Move Virtual Cursor</li>
+                        <li><span class="icon">🤏</span> <strong>Index + Thumb Pinch:</strong> Click / Hold / Type</li>
+                        <li><span class="icon">✌️</span> <strong>Index + Middle Up:</strong> Scroll Canvas</li>
+                        <li><span class="icon">🖐️</span> <strong>Open Palm:</strong> Hover / Pause</li>
+                    </ul>
+                </div>
+            </aside>
+
+            <!-- Right Panel: Interactive Playground -->
+            <section class="panel playground-panel">
+                <div class="panel-header">
+                    <h2>Interactive Playground</h2>
+                    <p>Test your index finger virtual cursor & keyboard live below</p>
+                </div>
+
+                <!-- Tab Controls -->
+                <div class="tab-bar">
+                    <button class="tab-btn active" data-tab="keyboard-tab">⌨️ Air Keyboard</button>
+                    <button class="tab-btn" data-tab="paint-tab">🎨 Air Paint</button>
+                    <button class="tab-btn" data-tab="targets-tab">🎯 Click Targets</button>
+                    <button class="tab-btn" data-tab="drag-tab">🃏 Drag Cards</button>
+                </div>
+
+                <!-- Tab 1: Virtual Keyboard -->
+                <div id="keyboard-tab" class="tab-content active">
+                    <div class="keyboard-input-wrapper">
+                        <input type="text" id="typed-text-box" class="typed-text-box" placeholder="Pinch or hover over keys to type in air..." readonly>
+                        <button id="clear-text-btn" class="btn btn-secondary btn-sm">Clear Text</button>
+                    </div>
+
+                    <div class="virtual-keyboard-grid" id="virtual-keyboard-grid">
+                        <!-- Row 1 -->
+                        <div class="kbd-row">
+                            <button class="kbd-key" data-key="Q">Q</button>
+                            <button class="kbd-key" data-key="W">W</button>
+                            <button class="kbd-key" data-key="E">E</button>
+                            <button class="kbd-key" data-key="R">R</button>
+                            <button class="kbd-key" data-key="T">T</button>
+                            <button class="kbd-key" data-key="Y">Y</button>
+                            <button class="kbd-key" data-key="U">U</button>
+                            <button class="kbd-key" data-key="I">I</button>
+                            <button class="kbd-key" data-key="O">O</button>
+                            <button class="kbd-key" data-key="P">P</button>
+                        </div>
+                        <!-- Row 2 -->
+                        <div class="kbd-row">
+                            <button class="kbd-key" data-key="A">A</button>
+                            <button class="kbd-key" data-key="S">S</button>
+                            <button class="kbd-key" data-key="D">D</button>
+                            <button class="kbd-key" data-key="F">F</button>
+                            <button class="kbd-key" data-key="G">G</button>
+                            <button class="kbd-key" data-key="H">H</button>
+                            <button class="kbd-key" data-key="J">J</button>
+                            <button class="kbd-key" data-key="K">K</button>
+                            <button class="kbd-key" data-key="L">L</button>
+                        </div>
+                        <!-- Row 3 -->
+                        <div class="kbd-row">
+                            <button class="kbd-key" data-key="Z">Z</button>
+                            <button class="kbd-key" data-key="X">X</button>
+                            <button class="kbd-key" data-key="C">C</button>
+                            <button class="kbd-key" data-key="V">V</button>
+                            <button class="kbd-key" data-key="B">B</button>
+                            <button class="kbd-key" data-key="N">N</button>
+                            <button class="kbd-key" data-key="M">M</button>
+                        </div>
+                        <!-- Row 4 -->
+                        <div class="kbd-row special-row">
+                            <button class="kbd-key wide-key" data-key="BACKSPACE">⌫ Backspace</button>
+                            <button class="kbd-key space-key" data-key="SPACE">Spacebar</button>
+                            <button class="kbd-key wide-key" data-key="ENTER">↵ Enter</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Air Paint Canvas -->
+                <div id="paint-tab" class="tab-content">
+                    <div class="canvas-toolbar">
+                        <div class="color-palette">
+                            <button class="color-btn active" style="background: #00f2fe;" data-color="#00f2fe"></button>
+                            <button class="color-btn" style="background: #4facfe;" data-color="#4facfe"></button>
+                            <button class="color-btn" style="background: #ff0844;" data-color="#ff0844"></button>
+                            <button class="color-btn" style="background: #ffb199;" data-color="#ffb199"></button>
+                            <button class="color-btn" style="background: #00e676;" data-color="#00e676"></button>
+                            <button class="color-btn" style="background: #7c4dff;" data-color="#7c4dff"></button>
+                        </div>
+                        <div class="brush-size">
+                            <label>Size:</label>
+                            <input type="range" id="brush-size-slider" min="2" max="30" value="8">
+                        </div>
+                        <button id="clear-paint-btn" class="btn btn-secondary btn-sm">Clear Board</button>
+                    </div>
+                    <div class="paint-area">
+                        <canvas id="paint-canvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Interactive Buttons -->
+                <div id="targets-tab" class="tab-content">
+                    <div class="grid-targets">
+                        <button class="test-card-btn" data-sound="1">
+                            <span class="card-icon">⚡</span>
+                            <h4>Fast Click</h4>
+                            <p>Score: <span class="score-count" id="score-1">0</span></p>
+                        </button>
+                        <button class="test-card-btn" data-sound="2">
+                            <span class="card-icon">🎯</span>
+                            <h4>Bullseye</h4>
+                            <p>Score: <span class="score-count" id="score-2">0</span></p>
+                        </button>
+                        <button class="test-card-btn" data-sound="3">
+                            <span class="card-icon">🚀</span>
+                            <h4>Boost</h4>
+                            <p>Score: <span class="score-count" id="score-3">0</span></p>
+                        </button>
+                        <button class="test-card-btn" data-sound="4">
+                            <span class="card-icon">💎</span>
+                            <h4>Gem Hit</h4>
+                            <p>Score: <span class="score-count" id="score-4">0</span></p>
+                        </button>
+                    </div>
+                    <div class="click-feedback-box">
+                        <p id="last-clicked-msg">Pinch index finger over any card to register a virtual click!</p>
+                    </div>
+                </div>
+
+                <!-- Tab 4: Drag & Drop -->
+                <div id="drag-tab" class="tab-content">
+                    <p class="drag-hint">Pinch & hold on a card to pick it up, then drag it around!</p>
+                    <div class="drag-zone" id="drag-zone">
+                        <div class="draggable-card card-1" style="top: 30px; left: 40px;">
+                            <span class="card-tag">Card #1</span>
+                            <h3>Hand Tracking AI</h3>
+                            <p>21 3D Hand Landmarks mapped in real-time</p>
+                        </div>
+                        <div class="draggable-card card-2" style="top: 140px; left: 260px;">
+                            <span class="card-tag">Card #2</span>
+                            <h3>EMA Smoothing</h3>
+                            <p>Exponential filtering removes finger jitter</p>
+                        </div>
+                        <div class="draggable-card card-3" style="top: 250px; left: 80px;">
+                            <span class="card-tag">Card #3</span>
+                            <h3>Air Gestures</h3>
+                            <p>Pinch, point, and scroll with zero touch</p>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+    </div>
+
+    <!-- Virtual Cursor Visual Layer -->
+    <div id="virtual-cursor" class="virtual-cursor theme-neon">
+        <div class="cursor-ring"></div>
+        <div class="cursor-dot"></div>
+        <div class="cursor-label">INDEX</div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
